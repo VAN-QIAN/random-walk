@@ -174,7 +174,7 @@ def setup_logger(log_dir: str, team_name: str, dataset_name: str, exp_name: str)
         name=exp_name,
         save_dir=log_dir,
         project=dataset_name.replace('/', '_'),
-        entity=team_name,
+        # entity=team_name,
         log_model=False
     )
     return logger

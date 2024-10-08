@@ -148,7 +148,7 @@ def get_config() -> edict:
         config.test_ckpt_path = None
 
     # create team name for wandb logging
-    config.team_name = 'vl-kaist'
+    config.team_name = 'maq5'
 
     # setup debugging
     if config.debug_mode:
@@ -235,7 +235,7 @@ def main(config):
         num_sanity_val_steps=0,
         callbacks=callbacks,
         deterministic=(not config.compile),
-        devices=(torch.cuda.device_count() if config.accelerator == 'gpu' else 1),
+        devices=1,#(torch.cuda.device_count() if config.accelerator == 'gpu' else 1),
         strategy=strategy,
         precision=precision,
         plugins=plugins,

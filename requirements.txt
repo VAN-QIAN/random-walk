@@ -19,12 +19,12 @@ chardet==3.0.4
 charset-normalizer==2.1.1
 chex==0.1.7
 click==8.1.6
-cmake==3.25.0
+cmake
 contourpy==1.1.0
 croniter==1.4.1
 cycler==0.11.0
 dateutils==0.6.12
-dbus-python==1.2.16
+# dbus-python
 deepdiff==6.3.1
 dill==0.3.7
 dm-tree==0.1.8
@@ -47,7 +47,7 @@ graphviz==0.20.1
 grpcio==1.56.2
 h11==0.14.0
 h5py==3.9.0
-huggingface-hub==0.20.3
+huggingface-hub
 idna==3.4
 importlib-metadata==6.8.0
 importlib-resources==6.0.0
@@ -117,7 +117,6 @@ pynauty==2.8.6
 pyparsing==3.0.9
 pyre-extensions==0.0.29
 pytest==7.4.2
-python-apt==2.0.1+ubuntu0.20.4.1
 python-dateutil==2.8.2
 python-editor==1.0.4
 python-multipart==0.0.6

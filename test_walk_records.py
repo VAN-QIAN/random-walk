@@ -248,19 +248,22 @@ def random_walk_text(n_walks: int = 1, include_neighbors: bool = True, seed: int
         walks, restarts = graph_walker.random_walks(
             G,
             n_walks=n_walks,
-            walk_len=1000,
+            walk_len=10,
             min_degree=True,
             sub_sampling=0.,
             p=1, q=1, alpha=0, k=None,
             no_backtrack=True,
             seed=seed
         )
+        print(f"Number of walks: {len(walks)}")
         walks_text = graph_walker.as_text(
             walks=walks,
             restarts=restarts,
             G=G,
             include_neighbors=include_neighbors
         )
+        # print("\n".join(walks_text))
+        print("Walks_text:",len(walks_text),walks_text[0])
     else:
         start_nodes = list(range(100))
         walks, restarts = graph_walker.random_walks_with_precomputed_probs(
@@ -294,6 +297,8 @@ def random_walk_text(n_walks: int = 1, include_neighbors: bool = True, seed: int
 # measure_statistics(min_degree=True)
 
 new_walks_string = random_walk_text(n_walks=1, include_neighbors=True)
+print(f"Number of new walks: {type(new_walks_string)}")
+# print("\n".join(new_walks_string))
 
 pretrained_model = "microsoft/deberta-base"
 pretrained_hf_tokenizer = AutoTokenizer.from_pretrained(pretrained_model)
@@ -313,7 +318,7 @@ print(f"\n{pretrained_model} tokenizer truncation rate: {np.mean(truncation_rate
 print(f"Estimated walk length: {1000 * (np.mean(1 - truncation_rate)):.2f} ± {1000 * np.std(1 - truncation_rate):.2f} steps")
 
 
-import pdb; pdb.set_trace()
+# import pdb; pdb.set_trace()
 
 # test trained tokenizer
 vocab_size = 10000  # or pretrained_hf_tokenizer.vocab_size
@@ -355,4 +360,4 @@ truncation_rate = 1 - np.array([len(s_new) / len(s_orig) for s_orig, s_new in zi
 print(f"\nTrained tokenizer truncation rate: {np.mean(truncation_rate):.2f} ± {np.std(truncation_rate):.2f}")
 print(f"Estimated walk length: {1000 * (np.mean(1 - truncation_rate)):.2f} ± {1000 * np.std(1 - truncation_rate):.2f} steps")
 
-import pdb; pdb.set_trace()
+# import pdb; pdb.set_trace()

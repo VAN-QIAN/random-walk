@@ -88,16 +88,16 @@ class Model(nn.Module):
         self.head_dropout = nn.Dropout(head_dropout, inplace=True)
         self.head = nn.Linear(self.backbone.config.hidden_size, walker.out_dim)
         # setup semi-supervised learning
-        if isinstance(walker, NodeClassificationArxivWalker):
-            dataset = walker.ds_builder.train_dataset()
-            self.label_dict = dataset.label_dict
-            self.data = dataset._data
-            self.data.target_label = torch.zeros_like(self.data.y).fill_(-1)
-            self.data.target_label[dataset.train_idx] = self.data.y[dataset.train_idx]
-            self.data.input_label = [self.label_dict[y][:-8].lower() if y != -1 else "unknown"
-                                     for y in self.data.target_label.squeeze(1).tolist()]
-            self.use_pseudo_label = dataset.use_pseudo_label
-            assert not self.use_pseudo_label
+        # if isinstance(walker, NodeClassificationArxivWalker):
+        #     dataset = walker.ds_builder.train_dataset()
+        #     self.label_dict = dataset.label_dict
+        #     self.data = dataset._data
+        #     self.data.target_label = torch.zeros_like(self.data.y).fill_(-1)
+        #     self.data.target_label[dataset.train_idx] = self.data.y[dataset.train_idx]
+        #     self.data.input_label = [self.label_dict[y][:-8].lower() if y != -1 else "unknown"
+        #                              for y in self.data.target_label.squeeze(1).tolist()]
+        #     self.use_pseudo_label = dataset.use_pseudo_label
+        #     assert not self.use_pseudo_label
         # setup compile variables
         self.is_compiled = is_compiled
         self.compiled_size = 0
@@ -130,12 +130,12 @@ class Model(nn.Module):
     def tokenize(self, batch, n_targets, target_ids: Tensor):
         # get random walk text
         n_walks = self.walker.n_walks if self.training else self.walker.eval_n_walks
-        if isinstance(self.walker, NodeClassificationArxivWalker):
-            start_nodes, target_ids = self.walker.get_start_nodes(batch, target_ids, n_walks)
-            text = self.walker.random_walk_text(self.data, 1, start_nodes)
-        else:
-            start_nodes, target_ids = self.walker.get_start_nodes(n_targets, target_ids, n_walks)
-            text = self.walker.random_walk_text(batch, 1, start_nodes)
+        # if isinstance(self.walker, NodeClassificationArxivWalker):
+        #     start_nodes, target_ids = self.walker.get_start_nodes(batch, target_ids, n_walks)
+        #     text = self.walker.random_walk_text(self.data, 1, start_nodes)
+        # else:
+        start_nodes, target_ids = self.walker.get_start_nodes(n_targets, target_ids, n_walks)
+        text = self.walker.random_walk_text(batch, 1, start_nodes)
         # tokenize text
         encoded_input = self.tokenizer(
             text,
@@ -148,6 +148,7 @@ class Model(nn.Module):
         input_ids, attention_mask = encoded_input['input_ids'], encoded_input['attention_mask']
         if self.debug_mode:
             decoded_text = self.tokenizer.batch_decode(input_ids)
+            print(f"Decoded Text: {decoded_text}")
             import pdb; pdb.set_trace()
         # perform necessary postprocessing
         if self.walker.reverse:
@@ -157,19 +158,19 @@ class Model(nn.Module):
         return input_ids, attention_mask, target_ids
 
     def forward(self, batch) -> Tuple[Tensor, Union[Tensor, Batch]]:
-        if isinstance(self.walker, NodeClassificationArxivWalker):
-            target, n_targets, target_ids = self.walker.parse_target(
-                batch, self.data.y, self.data.target_label, self.label_dict, self.training)
-        else:
-            target, n_targets, target_ids = self.walker.parse_target(batch)
+        # if isinstance(self.walker, NodeClassificationArxivWalker):
+        #     target, n_targets, target_ids = self.walker.parse_target(
+        #         batch, self.data.y, self.data.target_label, self.label_dict, self.training)
+        # else:
+        target, n_targets, target_ids = self.walker.parse_target(batch)
         input_ids, attention_mask, target_ids = self.tokenize(batch, n_targets, target_ids)
         output = self.backbone(input_ids=input_ids, attention_mask=attention_mask)
         walk_state = self.parse_output(output, input_ids)
         walk_pred = self.head(self.head_dropout(walk_state))
         pred = self.walker.pool_to_target(walk_pred, n_targets, target_ids, reduce='mean')
-        if isinstance(self.walker, NodeClassificationArxivWalker):
-            if self.use_pseudo_label and self.training:
-                self._update_target_label(pred, batch)
+        # if isinstance(self.walker, NodeClassificationArxivWalker):
+        #     if self.use_pseudo_label and self.training:
+        #         self._update_target_label(pred, batch)
         return pred, target
 
     def parse_output(self, output: ModelOutput, input_ids: Tensor) -> Tensor:

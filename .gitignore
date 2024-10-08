@@ -143,3 +143,7 @@ checklist.chk
 # src_transductive_classification/finetuning_experiments/datasets/**
 # !src_transductive_classification/datasets/**
 src_transductive_classification
+wandb
+data/*/raw
+nohup.out
+
