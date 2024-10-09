@@ -7,7 +7,7 @@ from .graph_separation_sr16 import GraphSeparationSR16Dataset, GraphSeparationSR
 from .graph_separation_sr25 import GraphSeparationSR25Dataset, GraphSeparationSR25Walker
 from .regression_counting import RegressionCountingDataset, RegressionCountingWalker
 from .graph_classification_reddit_treads import GraphCLSRedditDataset,GraphCLSRedditWalker
-from .graph_classification_reddit_IMDBM import GraphCLSIMDBMDataset,GraphCLSIMDBMWalker
+from .graph_classification_IMDBM import GraphCLSIMDBMDataset,GraphCLSIMDBMWalker
 from torch_geometric.datasets import TUDataset
 
 
@@ -42,9 +42,9 @@ def setup_data_and_walker(dataset: str, root_dir: str, config) -> Tuple[DatasetB
         walker.register_ds_builder(ds_builder)
         return ds_builder, walker
     if dataset == 'graph_classification_IMDB_MULTI':
-        walker = GraphCLSRedditWalker(config)
+        walker = GraphCLSIMDBMWalker(config)
         data_dir = config.data_dir
-        ds_builder = DatasetBuilder(dataset, is_pyg, GraphCLSRedditDataset, root_dir, config)
+        ds_builder = DatasetBuilder(dataset, is_pyg, GraphCLSIMDBMDataset, root_dir, config)
         walker.register_ds_builder(ds_builder)
         return ds_builder, walker
     # non-pyg datasets

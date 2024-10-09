@@ -148,6 +148,8 @@ class Model(nn.Module):
         input_ids, attention_mask = encoded_input['input_ids'], encoded_input['attention_mask']
         if self.debug_mode:
             decoded_text = self.tokenizer.batch_decode(input_ids)
+            print("Batch:", batch)
+            print("Lengths:", input_ids.shape, attention_mask.shape)
             print(f"Decoded Text: {decoded_text}")
             import pdb; pdb.set_trace()
         # perform necessary postprocessing
