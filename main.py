@@ -8,6 +8,7 @@ import torch
 import lightning as L
 
 from src.train import configure_data, configure_model, configure_experiment
+from datetime import datetime
 
 
 def str2bool(v: str) -> bool:
@@ -138,6 +139,8 @@ def get_config() -> edict:
                hasattr(config, 'gradient_clip_val') else '') \
             + f"seed_{config.seed},"
         config.exp_name += (config.name_postfix if hasattr(config, 'name_postfix') else '')
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        config.exp_name += f"_{current_time}"
 
     # create seed for testing
     if not hasattr(config, 'test_seed'):
