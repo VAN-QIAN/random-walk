@@ -235,7 +235,7 @@ def main(config):
         num_sanity_val_steps=0,
         callbacks=callbacks,
         deterministic=(not config.compile),
-        devices=1,#(torch.cuda.device_count() if config.accelerator == 'gpu' else 1),
+        devices=(torch.cuda.device_count() if config.accelerator == 'gpu' else 1),
         strategy=strategy,
         precision=precision,
         plugins=plugins,

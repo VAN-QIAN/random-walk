@@ -6,9 +6,9 @@ accelerator: gpu
 compile: True
 
 # data arguments
-dataset: graph_classification_reddit_threads
+dataset: graph_classification_IMDB_MULTI
 num_workers: 16
-global_batch_size: 256
+global_batch_size: 128
 gradient_clip_val: 2
 
 # model arguments
@@ -32,8 +32,8 @@ pretrained_tokenizer: True
 # training arguments
 n_steps: 100000
 optimizer: adamw
-lr: 0.00002
-lr_pretrained: 0.00002
+lr: 0.0002
+lr_pretrained: 0.0002
 lr_schedule: linear
 lr_warmup: 5000
 lr_warmup_scale: 0.

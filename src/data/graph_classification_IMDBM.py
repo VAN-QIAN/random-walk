@@ -266,6 +266,27 @@ class GraphCLSIMDBMDataset(InMemoryDataset):
         return osp.join(self.root, self.name, name)
 
     @property
+    def num_node_labels(self) -> int:
+        return self.sizes['num_node_labels']
+
+    @property
+    def num_node_attributes(self) -> int:
+        return self.sizes['num_node_attributes']
+
+    @property
+    def num_edge_labels(self) -> int:
+        return self.sizes['num_edge_labels']
+
+    @property
+    def num_edge_attributes(self) -> int:
+        return self.sizes['num_edge_attributes']
+
+    @property
+    def raw_file_names(self) -> List[str]:
+        names = ['A', 'graph_indicator']
+        return [f'{self.name}_{name}.txt' for name in names]
+
+    @property
     def processed_dir(self) -> str:
         name = f'processed{"_cleaned" if self.cleaned else ""}'
         return osp.join(self.root, self.name, name)
@@ -274,7 +295,44 @@ class GraphCLSIMDBMDataset(InMemoryDataset):
     def processed_file_names(self) -> List[str]:
         """Processed file names for train, val, and test splits."""
         return ['train_data.pt', 'val_data.pt', 'test_data.pt']
+    
+    def download(self) -> None:
+        url = self.url
+        fs.cp(f'{url}/{self.name}.zip', self.raw_dir, extract=True)
+        for filename in fs.ls(osp.join(self.raw_dir, self.name)):
+            fs.mv(filename, osp.join(self.raw_dir, osp.basename(filename)))
+        fs.rm(osp.join(self.raw_dir, self.name))
+        
+    def load_or_create_split_indices(self):
+        """Load or generate new split indices for train/val/test splits."""
+        split_path = f"./split/{self.name}.pt"
+        if os.path.exists(split_path):
+            # Load predefined indices if available
+            indices = torch.load(split_path)
+        else:
+            # Create new split indices if not available
+            torch.manual_seed(0)
+            indices = torch.randperm(len(self))  # Shuffle the dataset
+            train_size = int(self.train_val_test_split[0] * len(self))
+            val_size = int(self.train_val_test_split[1] * len(self))
+            test_size = len(self) - train_size - val_size
 
+            train_indices = indices[:train_size]
+            val_indices = indices[train_size:train_size + val_size]
+            test_indices = indices[train_size + val_size:]
+
+            # Save the indices for future use
+            indices_dict = {
+                'train': train_indices,
+                'val': val_indices,
+                'test': test_indices
+            }
+            torch.save(indices_dict, split_path)
+            indices = indices_dict
+            print("New indices generated and saved.")
+
+        return indices
+        
     def process(self) -> None:
         # Step 1: Read the raw data
         self.data, self.slices, sizes = read_tu_data(self.raw_dir, self.name)
@@ -290,36 +348,74 @@ class GraphCLSIMDBMDataset(InMemoryDataset):
         if self.pre_transform is not None:
             data_list = [self.pre_transform(d) for d in data_list]
 
-        # Step 5: Split the data into train, val, and test sets
-        train_data, val_data, test_data = self.split_data(data_list)
+        # Step 5: Get indices for train, val, and test splits
+        indices = self.load_or_create_split_indices()
 
-        # Step 6: Collate and save the train set
+        # Step 6: Split data using predefined or generated indices
+        train_data = [data_list[idx] for idx in indices['train']]
+        val_data = [data_list[idx] for idx in indices['val']]
+        test_data = [data_list[idx] for idx in indices['test']]
+
+        # Step 7: Collate and save the train set
         train_data, train_slices = self.collate(train_data)
         torch.save((train_data.to_dict(), train_slices, sizes, train_data.__class__), self.processed_paths[0])
 
-        # Step 7: Collate and save the validation set
+        # Step 8: Collate and save the validation set
         val_data, val_slices = self.collate(val_data)
         torch.save((val_data.to_dict(), val_slices, sizes, val_data.__class__), self.processed_paths[1])
 
-        # Step 8: Collate and save the test set
+        # Step 9: Collate and save the test set
         test_data, test_slices = self.collate(test_data)
         torch.save((test_data.to_dict(), test_slices, sizes, test_data.__class__), self.processed_paths[2])
 
         # Reset cache (if applicable)
         self._data_list = None
 
-    def split_data(self, data_list):
-        """Split the data list into train, validation, and test sets."""
-        num_samples = len(data_list)
-        train_size = int(0.8 * num_samples)  # 80% for training
-        val_size = int(0.1 * num_samples)    # 10% for validation
-        test_size = num_samples - train_size - val_size  # Remaining for testing
+    # def process(self) -> None:
+    #     # Step 1: Read the raw data
+    #     self.data, self.slices, sizes = read_tu_data(self.raw_dir, self.name)
 
-        train_data = data_list[:train_size]
-        val_data = data_list[train_size:train_size + val_size]
-        test_data = data_list[train_size + val_size:]
+    #     # Step 2: Load all data points into a data list
+    #     data_list = [self.get(idx) for idx in range(len(self))]
 
-        return train_data, val_data, test_data
+    #     # Step 3: Apply pre_filter if specified
+    #     if self.pre_filter is not None:
+    #         data_list = [d for d in data_list if self.pre_filter(d)]
+
+    #     # Step 4: Apply pre_transform if specified
+    #     if self.pre_transform is not None:
+    #         data_list = [self.pre_transform(d) for d in data_list]
+
+    #     # Step 5: Split the data into train, val, and test sets
+    #     train_data, val_data, test_data = self.split_data(data_list)
+
+    #     # Step 6: Collate and save the train set
+    #     train_data, train_slices = self.collate(train_data)
+    #     torch.save((train_data.to_dict(), train_slices, sizes, train_data.__class__), self.processed_paths[0])
+
+    #     # Step 7: Collate and save the validation set
+    #     val_data, val_slices = self.collate(val_data)
+    #     torch.save((val_data.to_dict(), val_slices, sizes, val_data.__class__), self.processed_paths[1])
+
+    #     # Step 8: Collate and save the test set
+    #     test_data, test_slices = self.collate(test_data)
+    #     torch.save((test_data.to_dict(), test_slices, sizes, test_data.__class__), self.processed_paths[2])
+
+    #     # Reset cache (if applicable)
+    #     self._data_list = None
+
+    # def split_data(self, data_list):
+    #     """Split the data list into train, validation, and test sets."""
+    #     num_samples = len(data_list)
+    #     train_size = int(0.8 * num_samples)  # 80% for training
+    #     val_size = int(0.1 * num_samples)    # 10% for validation
+    #     test_size = num_samples - train_size - val_size  # Remaining for testing
+
+    #     train_data = data_list[:train_size]
+    #     val_data = data_list[train_size:train_size + val_size]
+    #     test_data = data_list[train_size + val_size:]
+
+    #     return train_data, val_data, test_data
 
     def __repr__(self) -> str:
         return f'{self.name}({self.split} set, {len(self)} graphs)'
