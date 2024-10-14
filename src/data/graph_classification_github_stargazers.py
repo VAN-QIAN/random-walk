@@ -13,7 +13,7 @@ from torch_geometric.utils import remove_self_loops, to_undirected
 from .walker import Walker
 
 
-class GraphCLSRedditWalker(Walker):
+class GraphCLSGitStarWalker(Walker):
     def __init__(self, config):
         super().__init__(config)
         self.out_dim = 2
@@ -34,18 +34,38 @@ class GraphCLSRedditWalker(Walker):
         }
 
 
-class GraphCLSRedditDataset(InMemoryDataset):
+class GraphCLSGitStarDataset(InMemoryDataset):
 
     url = 'https://www.chrsmrrs.com/graphkerneldatasets'
     cleaned_url = ('https://raw.githubusercontent.com/nd7141/'
                    'graph_datasets/master/datasets')
 
-    def __init__(self, root, split, config, repeat=100):
-        self.name = 'reddit_threads'
-        self.repeat = repeat
-        super().__init__(root)
-        self.data, self.slices, sizes = read_tu_data(self.raw_dir, self.name)
 
+
+    def __init__(
+        self,
+        root,
+        config,
+        split: str = 'train',  # 'train', 'val', or 'test'
+        transform: Optional[Callable] = None,
+        pre_transform: Optional[Callable] = None,
+        pre_filter: Optional[Callable] = None,
+        force_reload: bool = False,
+        use_node_attr: bool = False,
+        use_edge_attr: bool = False,
+        cleaned: bool = False,
+        train_val_test_split=(0.8, 0.1, 0.1),  # Default split ratio
+    ) -> None:
+        self.name = 'github_stargazers'
+        self.cleaned = cleaned
+        self.split = split
+        self.train_val_test_split = train_val_test_split
+        super().__init__(root, transform, pre_transform, pre_filter,
+                         force_reload=force_reload)
+
+        # Load the appropriate dataset split based on `split`
+        self.load_processed_split()
+        
     @property
     def raw_dir(self) -> str:
         return osp.join(self.root, self.name, 'raw')
@@ -78,30 +98,6 @@ class GraphCLSRedditDataset(InMemoryDataset):
     @property
     def processed_file_names(self) -> str:
         return 'data.pt'
-
-    def __init__(
-        self,
-        root,
-        config,
-        split: str = 'train',  # 'train', 'val', or 'test'
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
-        pre_filter: Optional[Callable] = None,
-        force_reload: bool = False,
-        use_node_attr: bool = False,
-        use_edge_attr: bool = False,
-        cleaned: bool = False,
-        train_val_test_split=(0.8, 0.1, 0.1),  # Default split ratio
-    ) -> None:
-        self.name = 'reddit_threads'
-        self.cleaned = cleaned
-        self.split = split
-        self.train_val_test_split = train_val_test_split
-        super().__init__(root, transform, pre_transform, pre_filter,
-                         force_reload=force_reload)
-
-        # Load the appropriate dataset split based on `split`
-        self.load_processed_split()
 
     def load_processed_split(self):
         """Load the processed data based on the split."""
@@ -254,39 +250,6 @@ class GraphCLSRedditDataset(InMemoryDataset):
 
         # Reset cache (if applicable)
         self._data_list = None
-
-    # def process(self) -> None:
-    #     # Step 1: Read the raw data
-    #     self.data, self.slices, sizes = read_tu_data(self.raw_dir, self.name)
-
-    #     # Step 2: Load all data points into a data list
-    #     data_list = [self.get(idx) for idx in range(len(self))]
-
-    #     # Step 3: Apply pre_filter if specified
-    #     if self.pre_filter is not None:
-    #         data_list = [d for d in data_list if self.pre_filter(d)]
-
-    #     # Step 4: Apply pre_transform if specified
-    #     if self.pre_transform is not None:
-    #         data_list = [self.pre_transform(d) for d in data_list]
-
-    #     # Step 5: Split the data into train, val, and test sets
-    #     train_data, val_data, test_data = self.split_data(data_list)
-
-    #     # Step 6: Collate and save the train set
-    #     train_data, train_slices = self.collate(train_data)
-    #     torch.save((train_data.to_dict(), train_slices, sizes, train_data.__class__), self.processed_paths[0])
-
-    #     # Step 7: Collate and save the validation set
-    #     val_data, val_slices = self.collate(val_data)
-    #     torch.save((val_data.to_dict(), val_slices, sizes, val_data.__class__), self.processed_paths[1])
-
-    #     # Step 8: Collate and save the test set
-    #     test_data, test_slices = self.collate(test_data)
-    #     torch.save((test_data.to_dict(), test_slices, sizes, test_data.__class__), self.processed_paths[2])
-
-    #     # Reset cache (if applicable)
-    #     self._data_list = None
 
     def split_data(self, data_list):
         """Split the data list into train, validation, and test sets."""

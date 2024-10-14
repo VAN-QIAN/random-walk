@@ -322,13 +322,14 @@ class GraphCLSIMDBMDataset(InMemoryDataset):
             test_indices = indices[train_size + val_size:]
 
             # Save the indices for future use
-            indices_dict = {
-                'train': train_indices,
-                'val': val_indices,
-                'test': test_indices
-            }
-            torch.save(indices_dict, split_path)
-            indices = indices_dict
+            # indices_dict = {
+            #     'train': train_indices,
+            #     'val': val_indices,
+            #     'test': test_indices
+            # }
+            # torch.save(indices_dict, split_path)
+            # indices = indices_dict
+            torch.save(indices, split_path)
             print("New indices generated and saved.")
 
         return indices
@@ -350,11 +351,18 @@ class GraphCLSIMDBMDataset(InMemoryDataset):
 
         # Step 5: Get indices for train, val, and test splits
         indices = self.load_or_create_split_indices()
+        train_size = int(self.train_val_test_split[0] * len(self))
+        val_size = int(self.train_val_test_split[1] * len(self))
+        test_size = len(self) - train_size - val_size
+
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size:train_size + val_size]
+        test_indices = indices[train_size + val_size:]
 
         # Step 6: Split data using predefined or generated indices
-        train_data = [data_list[idx] for idx in indices['train']]
-        val_data = [data_list[idx] for idx in indices['val']]
-        test_data = [data_list[idx] for idx in indices['test']]
+        train_data = [data_list[idx] for idx in train_indices]
+        val_data = [data_list[idx] for idx in val_indices] #indices['val']]
+        test_data = [data_list[idx] for idx in test_indices]#indices['test']]
 
         # Step 7: Collate and save the train set
         train_data, train_slices = self.collate(train_data)
