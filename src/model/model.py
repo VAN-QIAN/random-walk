@@ -146,12 +146,26 @@ class Model(nn.Module):
         )
         encoded_input = encoded_input.to(target_ids.device)
         input_ids, attention_mask = encoded_input['input_ids'], encoded_input['attention_mask']
-        if self.debug_mode:
-            decoded_text = self.tokenizer.batch_decode(input_ids)
-            print("Batch:", batch)
-            print("Lengths:", input_ids.shape, attention_mask.shape)
-            print(f"Decoded Text: {decoded_text}")
-            import pdb; pdb.set_trace()
+        # if self.debug_mode:
+        #     print(f"n_targets is : {n_targets}")
+            # decoded_text = self.tokenizer.batch_decode(input_ids)
+            
+        #     # 需要检查的子序列
+        #     subsequence = "17#4#14#15"
+
+        #     # 检查子序列是否在词汇表中
+        #     if subsequence in self.tokenizer.vocab:
+        #         print(f"'{subsequence}' is in vocab!")
+        #     else:
+        #         print(f"'{subsequence}' is NOT in vocab!")
+
+        #     # 查看其拆分方式
+        #     tokens = self.tokenizer.tokenize(subsequence)
+        #     print(f"'{subsequence}' is split into: {tokens}")
+        #     print("Batch:", batch)
+        #     print("Lengths:", input_ids.shape, attention_mask.shape)
+        #     print(f"Decoded Text: {decoded_text}")
+        #     import pdb; pdb.set_trace()
         # perform necessary postprocessing
         if self.walker.reverse:
             input_ids, attention_mask = input_ids.flip(1), attention_mask.flip(1)
@@ -168,7 +182,13 @@ class Model(nn.Module):
         input_ids, attention_mask, target_ids = self.tokenize(batch, n_targets, target_ids)
         output = self.backbone(input_ids=input_ids, attention_mask=attention_mask)
         walk_state = self.parse_output(output, input_ids)
+        # if self.debug_mode:
+            # print("Walk State:", walk_state.size())
+            # import pdb; pdb.set_trace()
         walk_pred = self.head(self.head_dropout(walk_state))
+        # if self.debug_mode:
+            # print("Walk Pred:", walk_pred.size())
+            # import pdb; pdb.set_trace()
         pred = self.walker.pool_to_target(walk_pred, n_targets, target_ids, reduce='mean')
         # if isinstance(self.walker, NodeClassificationArxivWalker):
         #     if self.use_pseudo_label and self.training:

@@ -134,7 +134,7 @@ dmypy.json
 experiments
 tokenizer*.json
 *.pth
-*.pt
+#*.pt
 *.model
 *Meta-Llama-3*
 *llama-3-*

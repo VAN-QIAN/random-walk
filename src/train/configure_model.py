@@ -5,6 +5,7 @@ from src.data import Walker
 from src.model import Model
 from src.optim import OptimizerConfig, LRSchedulerConfig
 from .lit_module import LitModule
+from .lit_module_hiv import LitModuleHIV
 
 
 def configure_model(config, walker: Walker):
@@ -40,11 +41,20 @@ def configure_model(config, walker: Walker):
         lr_decay_degree=config.lr_decay_degree
     )
     # setup lightning model
-    model = LitModule(
-        model=model,
-        optimizer_config=optimizer_config,
-        lr_scheduler_config=lr_scheduler_config
-    )
+    print(f'########\n configuring model with {config.dataset} dataset')
+    if config.dataset in ['graph_classification_ogbg_molhiv'] :
+        print('########HIV dataset detected!')
+        model = LitModuleHIV(
+            model=model,
+            optimizer_config=optimizer_config,
+            lr_scheduler_config=lr_scheduler_config
+        )
+    else:
+        model = LitModule(
+            model=model,
+            optimizer_config=optimizer_config,
+            lr_scheduler_config=lr_scheduler_config
+        )
     print(model)
     # setup and load trained ckeckpoint
     ckpt_path = setup_ckpt_path(

@@ -79,13 +79,54 @@ class LitModule(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         y_hat, y = self.inference(batch)
+        # print("########")
+        # print(y)
+        # print(y.shape)
+        
+        # 创建一个掩码，标识哪些样本的标签中不包含 NaN
+        # 假设 y 的形状为 (batch_size, num_labels)
+        mask = ~torch.isnan(y).all(dim=1)
+        
+        # # 检查是否有有效的样本
+        # if mask.sum() == 0:
+        #     # 如果所有样本都包含 NaN，则跳过此批次
+        #     self.log('validation/all_nan', True, prog_bar=True)
+        #     return
+        
+        # 筛选出不包含 NaN 的样本
+        y_hat = y_hat[mask]
+        y = y[mask]
+        
+        # 计算损失
         loss = self.criterion(y_hat, y)
+        
+        # 计算评估指标
         perf = self.evaluator(y_hat, y)
+        
+        # 记录日志
         self.inference_log('validation', loss, perf, y_hat.shape[0])
 
     def test_step(self, batch, batch_idx):
         y_hat, y = self.inference(batch)
+        
+        # 创建一个掩码，标识哪些样本的标签中不包含 NaN
+        # 假设 y 的形状为 (batch_size, num_labels)
+        mask = ~torch.isnan(y).all(dim=1)
+        
+        # 检查是否有有效的样本
+        # if mask.sum() == 0:
+        #     # 如果所有样本都包含 NaN，则跳过此批次
+        #     self.log('validation/all_nan', True, prog_bar=True)
+        #     return
+        
+        # 筛选出不包含 NaN 的样本
+        y_hat = y_hat[mask]
+        y = y[mask]
+        
+        # 计算损失
         loss = self.criterion(y_hat, y)
+        
+        # 计算评估指标
         perf = self.evaluator(y_hat, y)
         self.inference_log('test', loss, perf, y_hat.shape[0])
 
